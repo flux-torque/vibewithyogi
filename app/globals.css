@@ -1,0 +1,347 @@
+@import "tailwindcss";
+
+:root {
+  --background: #dceaf2;
+  --foreground: #10202f;
+
+  /* One place to retime the whole opening. */
+  --clear-duration: 3.4s;
+  --clear-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* ---------------------------------------------------------------------------
+   Opening sequence
+   The clouds start heavy but partly transparent — the peaks read through them
+   from the first frame — then part outward and thin to nothing. The mountains
+   settle from a slight over-scale so the reveal feels like a camera at rest.
+   --------------------------------------------------------------------------- */
+
+@keyframes veil-fade {
+  0% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Each bank both drifts clear of the viewport and thins out. The translation
+   does most of the work — scale is kept low, because a bank that blooms while
+   it fades covers *more* of the scene on the way out and the reveal stalls.
+   The 55% opacity stop keeps the thinning ahead of the eased transform. */
+@keyframes bank-clear-left {
+  0% {
+    opacity: 0.88;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  55% {
+    opacity: 0.24;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-25%, -6%, 0) scale(1.1);
+  }
+}
+
+@keyframes bank-clear-right {
+  0% {
+    opacity: 0.85;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  55% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(25%, -8%, 0) scale(1.12);
+  }
+}
+
+@keyframes bank-clear-rise {
+  0% {
+    opacity: 0.8;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  55% {
+    opacity: 0.17;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(3%, -24%, 0) scale(1.14);
+  }
+}
+
+@keyframes scene-settle {
+  0% {
+    transform: scale(1.07);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes rise-in {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 26px, 0);
+    filter: blur(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: blur(0);
+  }
+}
+
+.cloud-curtain {
+  /* The turbulence raster is expensive; keep its painting isolated so the
+     fade composites rather than re-filtering every frame. */
+  contain: strict;
+}
+
+.cloud-veil {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.2) 0%,
+    rgba(255, 255, 255, 0.06) 28%,
+    rgba(247, 251, 253, 0.4) 56%,
+    rgba(238, 245, 250, 0.6) 80%,
+    rgba(255, 255, 255, 0.66) 100%
+  );
+  animation: veil-fade calc(var(--clear-duration) * 0.72) var(--clear-ease) both;
+  will-change: opacity;
+}
+
+/* Each bank is twice the viewport in both axes, so it spans -50%..150% of the
+   stage. Combined with drift capped at 25% of the bank's own size (= 50% of
+   the viewport), the sheet's edges never cross into view — otherwise a hard
+   rectangular seam sweeps across the scene as the bank slides away. */
+.cloud-bank {
+  position: absolute;
+  inset: -50%;
+  will-change: transform, opacity;
+}
+
+.cloud-bank--left {
+  animation: bank-clear-left var(--clear-duration) var(--clear-ease) both;
+}
+
+.cloud-bank--right {
+  animation: bank-clear-right calc(var(--clear-duration) * 1.06)
+    var(--clear-ease) 0.12s both;
+}
+
+.cloud-bank--rise {
+  animation: bank-clear-rise calc(var(--clear-duration) * 1.15) var(--clear-ease)
+    0.28s both;
+}
+
+/* Soft-bodied puffs layered under the noise so the banks have volume rather
+   than reading as a flat texture. */
+.cloud-puff {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 42% 38%,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(255, 255, 255, 0.62) 34%,
+    rgba(255, 255, 255, 0.2) 60%,
+    rgba(255, 255, 255, 0) 74%
+  );
+  filter: blur(30px);
+}
+
+/* Insets are relative to the oversized bank, whose middle 25%–75% is the part
+   actually on screen — so these sit inside that band, not at the bank edges. */
+.cloud-puff--a {
+  inset: 20% 60% 44% 10%;
+}
+.cloud-puff--b {
+  inset: 46% 66% 18% 16%;
+}
+.cloud-puff--c {
+  inset: 18% 12% 48% 58%;
+}
+.cloud-puff--d {
+  inset: 44% 18% 20% 62%;
+}
+
+.scene-mountains {
+  animation: scene-settle calc(var(--clear-duration) * 1.5)
+    cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: 50% 72%;
+  will-change: transform;
+}
+
+.reveal {
+  animation: rise-in 1.15s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.reveal-1 {
+  animation-delay: 1.05s;
+}
+.reveal-2 {
+  animation-delay: 1.26s;
+}
+.reveal-3 {
+  animation-delay: 1.5s;
+}
+.reveal-4 {
+  animation-delay: 1.76s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cloud-veil,
+  .cloud-bank {
+    animation: veil-fade 0.5s ease-out both;
+    transform: none;
+  }
+
+  .scene-mountains {
+    animation: none;
+    transform: none;
+  }
+
+  .reveal {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* ===========================================================================
+   Landing experiences (/landing1, /landing2)
+   Shared primitives: film grain, marquees, drifting cloud plates, line masks.
+   Everything animated here is transform/opacity only so the parallax stays
+   on the compositor at 60fps.
+   =========================================================================== */
+
+/* --- film grain -------------------------------------------------------- */
+.grain::after {
+  content: "";
+  position: fixed;
+  inset: -150%;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* The moving grain is a fixed layer 16x the size of the viewport being
+   re-composited three times a second — affordable on a desktop GPU, but on a
+   phone it eats the frame budget that scrolling needs. Static there. */
+@media (min-width: 640px) and (pointer: fine) {
+  .grain::after {
+    animation: grain-shift 0.7s steps(3) infinite;
+  }
+}
+
+@media (max-width: 639px) {
+  .grain::after {
+    inset: 0;
+    opacity: 0.035;
+  }
+}
+
+@keyframes grain-shift {
+  0% { transform: translate3d(0, 0, 0); }
+  33% { transform: translate3d(-3%, 2%, 0); }
+  66% { transform: translate3d(2%, -3%, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+/* --- infinite marquee --------------------------------------------------- */
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-run var(--marquee-duration, 38s) linear infinite;
+}
+
+.marquee-track[data-dir="reverse"] {
+  animation-direction: reverse;
+}
+
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes marquee-run {
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+/* --- cloud plates ------------------------------------------------------- */
+.cloud-drift {
+  animation: cloud-run var(--drift-duration, 120s) linear infinite;
+  will-change: transform;
+}
+
+@keyframes cloud-run {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+/* --- text helpers ------------------------------------------------------- */
+.line-mask {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+
+/* Fill has to be cleared with text-fill-color, not `color` — the stroke reads
+   currentColor, so zeroing `color` would erase the outline too. */
+.text-outline {
+  -webkit-text-stroke: 1.5px currentColor;
+  -webkit-text-fill-color: transparent;
+}
+
+.hairline {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    currentColor 12%,
+    currentColor 88%,
+    transparent
+  );
+  opacity: 0.28;
+}
+
+/* --- misc --------------------------------------------------------------- */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+@keyframes scroll-cue {
+  0%, 100% { transform: translateY(0); opacity: 0.35; }
+  50% { transform: translateY(7px); opacity: 1; }
+}
+
+.scroll-cue { animation: scroll-cue 2.1s ease-in-out infinite; }
+
+@keyframes soft-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.06); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track,
+  .cloud-drift,
+  .scroll-cue,
+  .grain::after {
+    animation: none !important;
+  }
+}
