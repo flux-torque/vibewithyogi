@@ -52,7 +52,7 @@ function Rail() {
       <div className="sticky top-0 flex h-[100svh] flex-col justify-center overflow-hidden">
         <div className="mb-10 flex items-end justify-between px-6 sm:px-10">
           <h2 className="font-[family-name:var(--font-anton)] text-[clamp(1.8rem,4.6vw,4rem)] uppercase leading-[0.9] tracking-[-0.01em] text-[#eef5fb]">
-            <MaskLinesInView lines={["Obsession"]} />
+            <MaskLinesInView lines={["Travel archives"]} />
           </h2>
           <p className="hidden font-mono text-[10px] uppercase tracking-[0.24em] text-[#c9dcea]/40 sm:block">
             Drag / scroll →
