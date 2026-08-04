@@ -291,8 +291,8 @@ export default function Sections() {
         id="contact"
         className="relative overflow-hidden border-t border-[#c9dcea]/10 bg-[#05070a] px-6 py-28 sm:px-10 lg:px-20"
       >
-        <div className="flex flex-col items-start justify-between gap-12 lg:flex-row lg:items-end">
-          <h2 className="font-[family-name:var(--font-anton)] text-[clamp(2.2rem,7vw,6rem)] uppercase leading-[1.04] text-[#f4f9ff]">
+        <div className="flex flex-col items-center justify-between gap-12 lg:flex-row lg:items-end">
+          <h2 className="text-center font-[family-name:var(--font-anton)] text-[clamp(2.2rem,7vw,6rem)] uppercase leading-[1.04] text-[#f4f9ff] lg:text-left">
             <MaskLinesInView lines={["Connect", "with me"]} />
           </h2>
 
