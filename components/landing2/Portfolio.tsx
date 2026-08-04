@@ -5,6 +5,7 @@ import { useRef } from "react";
 import { motion, useScroll, useTransform } from "motion/react";
 import { FadeUp, MaskLinesInView } from "@/components/shared/Reveal";
 import useDesktop from "@/components/shared/useDesktop";
+import useInViewVideo from "@/components/shared/useInViewVideo";
 
 /* ---------------------------------------------------------------------------
    Everything in this file is placeholder content — real films, real kit specs
@@ -68,22 +69,29 @@ const KIT = [
 
 /* --- drone films -------------------------------------------------------- */
 function FilmCard({ film }: { film: (typeof FILMS)[number] }) {
+  const { ref, ready, onCanPlayThrough } = useInViewVideo();
+
   return (
     <article className="relative h-full overflow-hidden rounded-sm">
       <div
-        className={
+        className={`relative bg-cover bg-center ${
           film.feature ? "aspect-[16/10] lg:aspect-[21/9]" : "aspect-[16/10]"
-        }
+        }`}
+        /* the poster sits underneath as a still, so the fade below has
+           something to come up from instead of a black hole */
+        style={{ backgroundImage: `url(/video/drone/${film.src}.jpg)` }}
       >
         <video
+          ref={ref}
           src={`/video/drone/${film.src}.mp4`}
-          poster={`/video/drone/${film.src}.jpg`}
-          autoPlay
           muted
           loop
           playsInline
-          preload="metadata"
-          className="h-full w-full object-cover"
+          preload="none"
+          onCanPlayThrough={onCanPlayThrough}
+          className={`h-full w-full object-cover transition-opacity duration-700 ${
+            ready ? "opacity-100" : "opacity-0"
+          }`}
         />
       </div>
 

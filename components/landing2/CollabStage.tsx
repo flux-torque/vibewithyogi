@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { FadeUp, MaskLinesInView } from "@/components/shared/Reveal";
+import useInViewVideo from "@/components/shared/useInViewVideo";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -33,6 +34,32 @@ const BRANDS = [
   { name: "Riddhi Dogra", tag: "On-screen collab" },
   { name: "Social Stays", tag: "Stays" },
 ];
+
+/** One clip on the stage: poster underneath, video cross-fading up over it. */
+function StageClip({ clip }: { clip: (typeof CLIPS)[number] }) {
+  const { ref, ready, onCanPlayThrough } = useInViewVideo("200px");
+
+  return (
+    <>
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(/video/collab/${clip.src}.jpg)` }}
+      />
+      <video
+        ref={ref}
+        src={`/video/collab/${clip.src}.mp4`}
+        muted
+        loop
+        playsInline
+        preload="none"
+        onCanPlayThrough={onCanPlayThrough}
+        className={`relative h-full w-full object-cover transition-opacity duration-500 ${
+          ready ? "opacity-100" : "opacity-0"
+        }`}
+      />
+    </>
+  );
+}
 
 /** The run of `n` portrait clips ending at `end`, wrapping the list. */
 function portraitRun(end: number, n: number) {
@@ -84,6 +111,14 @@ export default function CollabStage() {
   /* Mountrev is the only landscape cut — it takes the stage alone. Every
      other reel is 9:16 and runs in a row that fills the panel. */
   const onStage = CLIPS[cursor].wide ? [cursor] : portraitRun(cursor, slots);
+
+  /* The run only shifts by one per beat, so exactly one clip walks on at each
+     hand-over — and that lone newcomer was the stutter, because it started
+     its download at the moment it became visible. Fetching it during the
+     *previous* clip's hold turns that cold request into a cache hit. */
+  const next = (cursor + 1) % CLIPS.length;
+  const nextStage = CLIPS[next].wide ? [next] : portraitRun(next, slots);
+  const warming = nextStage.filter((i) => !onStage.includes(i));
 
   const live = new Set(onStage.map((i) => CLIPS[i].brand));
 
@@ -137,16 +172,7 @@ export default function CollabStage() {
                       clip.wide ? "" : "max-w-[calc(var(--stage-h)*0.5625)]"
                     }`}
                   >
-                    <video
-                      src={`/video/collab/${clip.src}.mp4`}
-                      poster={`/video/collab/${clip.src}.jpg`}
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      preload="auto"
-                      className="h-full w-full object-cover"
-                    />
+                    <StageClip clip={clip} />
                     <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,rgba(5,7,10,0.75),transparent_42%)]" />
                     <span className="absolute bottom-3 left-3 whitespace-nowrap bg-[#eef5fb] px-2 py-1 font-mono text-[9px] uppercase tracking-[0.16em] text-[#1662c4]">
                       {clip.brand}
@@ -155,6 +181,24 @@ export default function CollabStage() {
                 );
               })}
             </AnimatePresence>
+          </div>
+
+          {/* Off-stage warm-up for whatever walks on next. Never seen, never
+              played — it exists purely to put the bytes in the HTTP cache
+              before the clip is mounted for real. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute h-px w-px overflow-hidden opacity-0"
+          >
+            {warming.map((i) => (
+              <video
+                key={`warm-${CLIPS[i].src}`}
+                src={`/video/collab/${CLIPS[i].src}.mp4`}
+                muted
+                playsInline
+                preload="auto"
+              />
+            ))}
           </div>
 
           {/* progress ticks, one per clip */}
