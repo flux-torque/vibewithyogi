@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { getImageProps } from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform } from "motion/react";
 import MountainMark from "@/components/shared/MountainMark";
@@ -12,6 +12,21 @@ const TITLE = "VIBE WITH YOGI";
    almost edge to edge, and the landscape frame takes over from `sm` up. */
 const FRAME_WIDE = "/photos/thar.jpg";
 const FRAME_TALL = "/photos/hero-portrait.jpg";
+
+/* One <picture>, not two <Image>s toggled with CSS: two `priority` images
+   meant every visitor downloaded both frames before seeing either. With art
+   direction the browser fetches only the one its viewport will show. */
+const FRAME_COMMON = {
+  alt: "Yogi on a ridge road under snow peaks",
+  fill: true,
+  sizes: "100vw",
+} as const;
+const {
+  props: { srcSet: frameWideSet },
+} = getImageProps({ ...FRAME_COMMON, src: FRAME_WIDE });
+const {
+  props: { srcSet: frameTallSet, ...frameImg },
+} = getImageProps({ ...FRAME_COMMON, src: FRAME_TALL });
 
 /* Words alternate the side they arrive from, so the wordmark closes in on
    itself from both edges rather than rising. */
@@ -89,22 +104,17 @@ export default function Hero() {
     >
       {/* --- 1. the frame — dead still on touch ---------------------------- */}
       <motion.div style={plate} className="absolute inset-0 z-0 sm:will-change-transform">
-        <Image
-          src={FRAME_TALL}
-          alt="Yogi above the snowline"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-[52%_42%] brightness-[0.78] contrast-[1.12] saturate-[0.92] sm:hidden"
-        />
-        <Image
-          src={FRAME_WIDE}
-          alt="Yogi and his Thar on a ridge road under snow peaks"
-          fill
-          priority
-          sizes="100vw"
-          className="hidden object-cover object-[52%_46%] brightness-[0.74] contrast-[1.14] saturate-[0.9] sm:block"
-        />
+        <picture>
+          <source media="(min-width: 640px)" srcSet={frameWideSet} />
+          <img
+            {...frameImg}
+            srcSet={frameTallSet}
+            alt={FRAME_COMMON.alt}
+            loading="eager"
+            fetchPriority="high"
+            className="object-cover object-[52%_42%] brightness-[0.78] contrast-[1.12] saturate-[0.92] sm:object-[52%_46%] sm:brightness-[0.74] sm:contrast-[1.14] sm:saturate-[0.9]"
+          />
+        </picture>
       </motion.div>
 
       {/* --- 2. the wordmark — one-shot, triggered by the first scroll ------ */}

@@ -12,8 +12,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-mono-j);
 }
 
 body {
@@ -234,16 +234,18 @@ body {
 .grain::after {
   content: "";
   position: fixed;
-  inset: -150%;
+  /* Just enough overscan to hide the edges while it shifts — the old -150%
+     made a layer 16x the viewport that the GPU re-composited every step. */
+  inset: -6%;
   z-index: 60;
   pointer-events: none;
   opacity: 0.045;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* The moving grain is a fixed layer 16x the size of the viewport being
-   re-composited three times a second — affordable on a desktop GPU, but on a
-   phone it eats the frame budget that scrolling needs. Static there. */
+/* Even trimmed, a moving full-screen layer costs a re-composite three times
+   a second — fine on a desktop GPU, but on a phone it eats the frame budget
+   that scrolling needs. Static there. */
 @media (min-width: 640px) and (pointer: fine) {
   .grain::after {
     animation: grain-shift 0.7s steps(3) infinite;
@@ -259,8 +261,8 @@ body {
 
 @keyframes grain-shift {
   0% { transform: translate3d(0, 0, 0); }
-  33% { transform: translate3d(-3%, 2%, 0); }
-  66% { transform: translate3d(2%, -3%, 0); }
+  33% { transform: translate3d(-4%, 3%, 0); }
+  66% { transform: translate3d(3%, -4%, 0); }
   100% { transform: translate3d(0, 0, 0); }
 }
 
@@ -344,4 +346,10 @@ body {
   .grain::after {
     animation: none !important;
   }
+}
+
+/* Lenis only runs with a mouse (see SmoothScroll); touch gets the browser's
+   own smooth anchor scrolling so menu links still glide. */
+@media (pointer: coarse) and (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
 }

@@ -2,6 +2,16 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+/** Data Saver on, or a 2G-class link — a looping clip would starve the page. */
+export function constrainedNetwork() {
+  const c = (
+    navigator as Navigator & {
+      connection?: { saveData?: boolean; effectiveType?: string };
+    }
+  ).connection;
+  return Boolean(c?.saveData || /(^|-)2g$/.test(c?.effectiveType ?? ""));
+}
+
 /**
  * Visibility-gated playback for a decorative background <video>.
  *
@@ -43,8 +53,13 @@ export default function useInViewVideo(preloadMargin = "600px") {
     const el = ref.current;
     if (!el) return;
 
-    /* Reduced-motion readers get the poster and nothing else. */
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    /* Reduced-motion readers, and anyone on a starved connection, get the
+       poster and nothing else. */
+    if (
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      constrainedNetwork()
+    )
+      return;
 
     /* Start fetching before it arrives, so by the time it is on screen the
        first frames are already decoded. */

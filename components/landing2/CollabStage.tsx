@@ -1,9 +1,9 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useInView } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { FadeUp, MaskLinesInView } from "@/components/shared/Reveal";
-import useInViewVideo from "@/components/shared/useInViewVideo";
+import useInViewVideo, { constrainedNetwork } from "@/components/shared/useInViewVideo";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -74,7 +74,18 @@ function portraitRun(end: number, n: number) {
 
 export default function CollabStage() {
   const [cursor, setCursor] = useState(0);
+  const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+
+  /* The reel only runs while it is close to being seen. Left free-running
+     from page load, each beat's warm-up quietly pulled the next clip, so a
+     reader still on the hero had the whole reel downloaded underneath them. */
+  const near = useInView(sectionRef, { margin: "400px 0px" });
+  const [canWarm, setCanWarm] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setCanWarm(!constrainedNetwork()));
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   /* How many 9:16 clips it takes to fill the stage.
      A vertical reel must never be stretched past 9:16, so instead of letting
@@ -101,12 +112,13 @@ export default function CollabStage() {
 
   // each clip hands over to the next when its own run is done
   useEffect(() => {
+    if (!near) return;
     const t = setTimeout(
       () => setCursor((c) => (c + 1) % CLIPS.length),
       CLIPS[cursor].hold
     );
     return () => clearTimeout(t);
-  }, [cursor]);
+  }, [cursor, near]);
 
   /* Mountrev is the only landscape cut — it takes the stage alone. Every
      other reel is 9:16 and runs in a row that fills the panel. */
@@ -118,12 +130,14 @@ export default function CollabStage() {
      *previous* clip's hold turns that cold request into a cache hit. */
   const next = (cursor + 1) % CLIPS.length;
   const nextStage = CLIPS[next].wide ? [next] : portraitRun(next, slots);
-  const warming = nextStage.filter((i) => !onStage.includes(i));
+  const warming =
+    near && canWarm ? nextStage.filter((i) => !onStage.includes(i)) : [];
 
   const live = new Set(onStage.map((i) => CLIPS[i].brand));
 
   return (
     <section
+      ref={sectionRef}
       id="collabs"
       className="relative border-t border-[#c9dcea]/10 bg-[#05070a] px-4 py-24 sm:px-6 lg:px-10 lg:py-32"
     >

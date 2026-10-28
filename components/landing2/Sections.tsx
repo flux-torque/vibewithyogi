@@ -127,7 +127,6 @@ function Portrait() {
               src="/photos/aboutme.jpg"
               alt="Yogesh Yadav on a ridge in Spiti"
               fill
-              priority
               sizes="(max-width: 1024px) 100vw, 48vw"
               className="object-cover object-bottom"
             />
