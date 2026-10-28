@@ -2,64 +2,48 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-/** Data Saver on, or a 2G-class link — a looping clip would starve the page. */
-export function constrainedNetwork() {
-  const c = (
-    navigator as Navigator & {
-      connection?: { saveData?: boolean; effectiveType?: string };
-    }
-  ).connection;
-  return Boolean(c?.saveData || /(^|-)2g$/.test(c?.effectiveType ?? ""));
-}
-
 /**
  * Visibility-gated playback for a decorative background <video>.
  *
- * The stutter at the top of a clip comes from letting it start before it can
- * actually run. Three things have to line up, and skipping the middle one is
- * what you see as a jerk:
- *
  *   1. near the viewport  — only then is a single byte requested
- *   2. buffered enough    — readyState 4, so playback won't stall a frame in
- *   3. actually on screen — otherwise pause and hand the bandwidth to
+ *   2. actually on screen — play; otherwise pause and hand the bandwidth to
  *                           whatever the reader is really looking at
  *
- * `ready` flips once (2) holds, so the caller can cross-fade from the poster
- * instead of popping.
+ * Playback is asked for as soon as the clip is on screen, and the browser
+ * starts it the moment it has frames. Waiting for `canplaythrough` instead
+ * looked safer but never fired on slow links or iOS Safari (which won't
+ * buffer ahead until play() is called), so clips sat on their posters.
+ *
+ * The jerk at the top of a clip is hidden rather than waited out: the video
+ * stays transparent over its poster until `playing` fires — real frames are
+ * moving — and only then cross-fades up.
  */
 export default function useInViewVideo(preloadMargin = "600px") {
   const ref = useRef<HTMLVideoElement | null>(null);
   const onScreen = useRef(false);
+  const armed = useRef(false);
   const [ready, setReady] = useState(false);
 
   /* The single place that decides whether this clip should be running. */
   const sync = useCallback(() => {
     const el = ref.current;
-    if (!el) return;
-    // HAVE_ENOUGH_DATA — anything less and we would be starting into a stall
-    if (onScreen.current && el.readyState >= 4) {
+    if (!el || !armed.current) return;
+    if (onScreen.current) {
+      // rejected in e.g. iOS Low Power Mode — the poster simply stays up
       void el.play().catch(() => {});
-    } else if (!onScreen.current) {
+    } else {
       el.pause();
     }
   }, []);
 
-  const onCanPlayThrough = useCallback(() => {
-    setReady(true);
-    sync();
-  }, [sync]);
+  const onPlaying = useCallback(() => setReady(true), []);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
 
-    /* Reduced-motion readers, and anyone on a starved connection, get the
-       poster and nothing else. */
-    if (
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
-      constrainedNetwork()
-    )
-      return;
+    /* Reduced-motion readers get the poster and nothing else. */
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     /* Start fetching before it arrives, so by the time it is on screen the
        first frames are already decoded. */
@@ -68,7 +52,9 @@ export default function useInViewVideo(preloadMargin = "600px") {
         if (!entry.isIntersecting) return;
         el.preload = "auto";
         el.load();
+        armed.current = true;
         warm.disconnect();
+        sync();
       },
       { rootMargin: preloadMargin }
     );
@@ -89,5 +75,5 @@ export default function useInViewVideo(preloadMargin = "600px") {
     };
   }, [preloadMargin, sync]);
 
-  return { ref, ready, onCanPlayThrough };
+  return { ref, ready, onPlaying };
 }

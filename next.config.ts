@@ -2,9 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    /* AVIF first — on these photos it comes in at roughly half the WebP size,
-       which is most of what a slow connection pays for. */
-    formats: ["image/avif", "image/webp"],
+    /* WebP only. AVIF saved ~6% on these photos but took about twice as
+       long to encode, and a cold page queues fifteen of them at once — the
+       wait cost far more than the bytes saved. */
+    formats: ["image/webp"],
     /* The default ladder tops out at 3840, so a full-bleed frame on a retina
        laptop pulls a 4K photo. 2560 is indistinguishable under the grade. */
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2560],

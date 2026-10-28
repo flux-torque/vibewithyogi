@@ -69,7 +69,7 @@ const KIT = [
 
 /* --- drone films -------------------------------------------------------- */
 function FilmCard({ film }: { film: (typeof FILMS)[number] }) {
-  const { ref, ready, onCanPlayThrough } = useInViewVideo();
+  const { ref, ready, onPlaying } = useInViewVideo();
 
   return (
     <article className="relative h-full overflow-hidden rounded-sm">
@@ -88,7 +88,7 @@ function FilmCard({ film }: { film: (typeof FILMS)[number] }) {
           loop
           playsInline
           preload="none"
-          onCanPlayThrough={onCanPlayThrough}
+          onPlaying={onPlaying}
           className={`h-full w-full object-cover transition-opacity duration-700 ${
             ready ? "opacity-100" : "opacity-0"
           }`}

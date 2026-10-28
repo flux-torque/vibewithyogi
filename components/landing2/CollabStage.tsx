@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useInView } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { FadeUp, MaskLinesInView } from "@/components/shared/Reveal";
-import useInViewVideo, { constrainedNetwork } from "@/components/shared/useInViewVideo";
+import useInViewVideo from "@/components/shared/useInViewVideo";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -37,7 +37,7 @@ const BRANDS = [
 
 /** One clip on the stage: poster underneath, video cross-fading up over it. */
 function StageClip({ clip }: { clip: (typeof CLIPS)[number] }) {
-  const { ref, ready, onCanPlayThrough } = useInViewVideo("200px");
+  const { ref, ready, onPlaying } = useInViewVideo();
 
   return (
     <>
@@ -52,7 +52,7 @@ function StageClip({ clip }: { clip: (typeof CLIPS)[number] }) {
         loop
         playsInline
         preload="none"
-        onCanPlayThrough={onCanPlayThrough}
+        onPlaying={onPlaying}
         className={`relative h-full w-full object-cover transition-opacity duration-500 ${
           ready ? "opacity-100" : "opacity-0"
         }`}
@@ -77,15 +77,12 @@ export default function CollabStage() {
   const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
 
-  /* The reel only runs while it is close to being seen. Left free-running
-     from page load, each beat's warm-up quietly pulled the next clip, so a
-     reader still on the hero had the whole reel downloaded underneath them. */
-  const near = useInView(sectionRef, { margin: "400px 0px" });
-  const [canWarm, setCanWarm] = useState(false);
-  useEffect(() => {
-    const raf = requestAnimationFrame(() => setCanWarm(!constrainedNetwork()));
-    return () => cancelAnimationFrame(raf);
-  }, []);
+  /* The reel only runs while it is within a screen or so of being seen.
+     Left free-running from page load, each beat's warm-up quietly pulled the
+     next clip, so a reader still on the hero had the whole reel downloaded
+     underneath them. A full viewport of lead still gives a slow connection
+     time to have the first clips in hand on arrival. */
+  const near = useInView(sectionRef, { margin: "100% 0px" });
 
   /* How many 9:16 clips it takes to fill the stage.
      A vertical reel must never be stretched past 9:16, so instead of letting
@@ -131,7 +128,7 @@ export default function CollabStage() {
   const next = (cursor + 1) % CLIPS.length;
   const nextStage = CLIPS[next].wide ? [next] : portraitRun(next, slots);
   const warming =
-    near && canWarm ? nextStage.filter((i) => !onStage.includes(i)) : [];
+    near ? nextStage.filter((i) => !onStage.includes(i)) : [];
 
   const live = new Set(onStage.map((i) => CLIPS[i].brand));
 

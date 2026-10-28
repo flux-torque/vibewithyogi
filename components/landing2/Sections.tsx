@@ -9,12 +9,31 @@ import { Films, Gear } from "@/components/landing2/Portfolio";
 import { FadeUp, MaskLinesInView } from "@/components/shared/Reveal";
 import useDesktop from "@/components/shared/useDesktop";
 
+/* Imported rather than referenced by path, so each photo carries a tiny
+   blurred preview: a slow connection shows the shape of the frame at once
+   instead of an empty box, and the files get hashed, immutable URLs. */
+import aboutMe from "@/public/photos/aboutme.jpg";
+import g1 from "@/public/photos/g1.jpg";
+import g2 from "@/public/photos/g2.jpg";
+import g3 from "@/public/photos/g3.jpg";
+import g4 from "@/public/photos/g4.jpg";
+import g5 from "@/public/photos/g5.jpg";
+import g6 from "@/public/photos/g6.jpg";
+import g7 from "@/public/photos/g7.jpg";
+import g8 from "@/public/photos/g8.jpg";
+import g9 from "@/public/photos/g9.jpg";
+import g10 from "@/public/photos/g10.jpg";
+import routeKuari from "@/public/photos/route-kuari.jpg";
+import routeLadakh from "@/public/photos/route-ladakh.jpg";
+import routeSpiti from "@/public/photos/route-spiti.jpg";
+import routeZanskar from "@/public/photos/route-zanskar.jpg";
+
 /* Placeholder content. */
 const PANELS = [
-  { n: "01", title: "Spiti", img: "/photos/route-spiti.jpg" },
-  { n: "02", title: "Kuari", img: "/photos/route-kuari.jpg" },
-  { n: "03", title: "Ladakh", img: "/photos/route-ladakh.jpg" },
-  { n: "04", title: "Zanskar", img: "/photos/route-zanskar.jpg" },
+  { n: "01", title: "Spiti", img: routeSpiti },
+  { n: "02", title: "Kuari", img: routeKuari },
+  { n: "03", title: "Ladakh", img: routeLadakh },
+  { n: "04", title: "Zanskar", img: routeZanskar },
 ];
 
 
@@ -74,6 +93,7 @@ function Rail() {
                 alt={p.title}
                 fill
                 sizes="(max-width: 640px) 74vw, 32vw"
+                placeholder="blur"
                 className="object-cover"
               />
               <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(5,7,10,0.85),rgba(5,7,10,0.08)_50%,transparent)]" />
@@ -124,9 +144,12 @@ function Portrait() {
         <div className="relative aspect-[3/4] max-h-[76vh] w-full overflow-hidden rounded-sm">
           <motion.div style={{ y: figureY }} className="absolute inset-x-0 -top-[7%] bottom-0">
             <Image
-              src="/photos/aboutme.jpg"
+              src={aboutMe}
               alt="Yogesh Yadav on a ridge in Spiti"
               fill
+              /* first thing under the hero — start now, but behind it */
+              loading="eager"
+              placeholder="blur"
               sizes="(max-width: 1024px) 100vw, 48vw"
               className="object-cover object-bottom"
             />
@@ -205,26 +228,26 @@ function Gallery() {
     {
       y: a,
       items: [
-        { src: "/photos/g1.jpg", pos: "50% 40%" },
-        { src: "/photos/g4.jpg", pos: "50% 50%" },
-        { src: "/photos/g7.jpg", pos: "50% 55%" },
+        { src: g1, pos: "50% 40%" },
+        { src: g4, pos: "50% 50%" },
+        { src: g7, pos: "50% 55%" },
       ],
     },
     {
       y: b,
       items: [
-        { src: "/photos/g2.jpg", pos: "50% 45%" },
-        { src: "/photos/g5.jpg", pos: "50% 35%" },
-        { src: "/photos/g8.jpg", pos: "50% 50%" },
+        { src: g2, pos: "50% 45%" },
+        { src: g5, pos: "50% 35%" },
+        { src: g8, pos: "50% 50%" },
       ],
     },
     {
       y: c,
       items: [
-        { src: "/photos/g3.jpg", pos: "50% 50%" },
-        { src: "/photos/g10.jpg", pos: "50% 45%" },
-        { src: "/photos/g6.jpg", pos: "50% 45%" },
-        { src: "/photos/g9.jpg", pos: "50% 40%" },
+        { src: g3, pos: "50% 50%" },
+        { src: g10, pos: "50% 45%" },
+        { src: g6, pos: "50% 45%" },
+        { src: g9, pos: "50% 40%" },
       ],
     },
   ];
@@ -255,7 +278,7 @@ function Gallery() {
           >
             {col.items.map((item, i) => (
               <div
-                key={item.src + i}
+                key={item.src.src + i}
                 className="relative aspect-[4/5] overflow-hidden rounded-sm"
               >
                 <Image
@@ -264,6 +287,7 @@ function Gallery() {
                   fill
                   sizes="(max-width: 1024px) 50vw, 33vw"
                   style={{ objectPosition: item.pos }}
+                  placeholder="blur"
                   className="object-cover"
                 />
               </div>
